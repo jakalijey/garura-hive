@@ -9,7 +9,7 @@ import { createServer } from '../server.mjs';
 const newAddr = () => Nimiq.KeyPair.generate().toAddress().toUserFriendlyAddress();
 const EVM = '0x1111111111111111111111111111111111111111';
 
-async function boot({ ura = {}, linksFor = {}, payoutFails = false, humanEvery = 1_000_000, payoutEnabled = true, testAddresses = '' } = {}) {
+async function boot({ ura = {}, linksFor = {}, payoutFails = false, humanEvery = 1_000_000, payoutEnabled = true, testAddresses = '', autoSweep = false } = {}) {
   let clock = 1_800_000_000_000;
   const sent = [];
   const payout = {
@@ -17,7 +17,7 @@ async function boot({ ura = {}, linksFor = {}, payoutFails = false, humanEvery =
     send: async (to, luna) => { if (payoutFails) throw new Error('network'); sent.push({ to, luna }); return 'tx' + sent.length; },
   };
   const s = createServer({
-    dataDir: mkdtempSync(join(tmpdir(), 'hive-')), payout, humanEvery, minTapGapMs: 0, autoPayouts: false, testAddresses,
+    dataDir: mkdtempSync(join(tmpdir(), 'hive-')), payout, humanEvery, minTapGapMs: 0, autoPayouts: false, testAddresses, autoSweep,
     uraClaimedTotal: async (evm) => ura[evm.toLowerCase()] ?? 0,
     uraLinks: async (addr) => linksFor[addr] ?? [],
     now: () => clock,
@@ -208,5 +208,64 @@ test('leaderboard: today vs all-time, own row marked, own place returned outside
     assert.equal(day.me.pos, 2);
     const anon = await t.api('/api/leaderboard');
     assert.equal(anon.me, null); assert.ok(anon.top.every((x) => !x.you));
+  } finally { t.close(); }
+});
+
+test('auto payout: each batch sends the honey of every jar with at least 0.01 NIM to its address; smaller jars wait', async () => {
+  const t = await boot({ autoSweep: true });
+  try {
+    const a = newAddr(), b = newAddr();
+    const sa = await t.api('/api/session', { address: a, auto: true }), sb = await t.api('/api/session', { address: b, auto: true });
+    await tapN(t.api, sa.token, 150); await tapN(t.api, sb.token, 50);
+    const me = await t.api('/api/me?token=' + sa.token);
+    assert.equal(me.autoPayout, true); assert.ok(me.nextBatchAt);
+    await t.s.runPayouts();
+    assert.deepEqual(t.sent, [{ to: a, luna: 1500n }]);
+    assert.equal((await t.api('/api/me?token=' + sa.token)).jar, '0');
+    assert.equal((await t.api('/api/me?token=' + sb.token)).jar, '0.005');
+    await tapN(t.api, sb.token, 60); await t.s.runPayouts();
+    assert.deepEqual(t.sent.at(-1), { to: b, luna: 1100n });
+  } finally { t.close(); }
+});
+
+test('auto payout: a failed send keeps the honey queued and it is retried', async () => {
+  const t = await boot({ autoSweep: true, payoutFails: true });
+  try {
+    const s = await t.api('/api/session', { address: newAddr(), auto: true });
+    await tapN(t.api, s.token, 200); await t.s.runPayouts();
+    const me = await t.api('/api/me?token=' + s.token);
+    assert.equal(me.jar, '0'); assert.equal(me.queued, '0.02'); assert.equal(me.paidTotal, '0');
+  } finally { t.close(); }
+});
+
+test('auto payout only for Nimiq Pay sign-ins: a typed address keeps the Withdraw flow (1 NIM minimum)', async () => {
+  const t = await boot({ autoSweep: true });
+  try {
+    const web = newAddr(), pay = newAddr();
+    const sw = await t.api('/api/session', { address: web }), sp = await t.api('/api/session', { address: pay, auto: true });
+    await tapN(t.api, sw.token, 150); await tapN(t.api, sp.token, 150);
+    assert.equal((await t.api('/api/me?token=' + sw.token)).autoPayout, false);
+    assert.equal((await t.api('/api/me?token=' + sp.token)).autoPayout, true);
+    await t.s.runPayouts();
+    assert.deepEqual(t.sent.map((x) => x.to), [pay]);
+    assert.equal((await t.api('/api/me?token=' + sw.token)).jar, '0.015');
+    assert.equal((await t.api('/api/withdraw', { token: sw.token })).error, 'below_minimum');
+  } finally { t.close(); }
+});
+
+test('ranking name can be set after signing in (Nimiq Pay asks once); cleaned and kept', async () => {
+  const t = await boot();
+  try {
+    const addr = newAddr();
+    const s = await t.api('/api/session', { address: addr, auto: true });
+    assert.ok(!(await t.api('/api/me?token=' + s.token)).name);
+    assert.equal((await t.api('/api/name', { token: s.token, name: '   ' })).error, 'empty_name');
+    const r = await t.api('/api/name', { token: s.token, name: '  <Arı>Kraliçe ' });
+    assert.equal(r.ok, true); assert.equal(r.name, 'ArıKraliçe');
+    await tapN(t.api, s.token, 3);
+    assert.equal((await t.api('/api/leaderboard')).top[0].name, 'ArıKraliçe');
+    const again = await t.api('/api/session', { address: addr, auto: true });
+    assert.equal((await t.api('/api/me?token=' + again.token)).name, 'ArıKraliçe');
+    assert.equal((await t.api('/api/name', { token: 'nope', name: 'x' })).status, 401);
   } finally { t.close(); }
 });

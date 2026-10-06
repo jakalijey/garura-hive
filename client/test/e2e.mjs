@@ -15,7 +15,7 @@ const addr = Nimiq.KeyPair.generate().toAddress().toUserFriendlyAddress();
 const EVM = '0x2222222222222222222222222222222222222222';
 const ura = { [EVM]: 0 }, sent = [];
 const game = createGameServer({
-  dataDir: mkdtempSync(join(tmpdir(), 'hive-e2e-')), cfg: { ...DEFAULTS, FILL_TAPS: 100 }, humanEvery: 5, minTapGapMs: 30, autoPayouts: false,
+  dataDir: mkdtempSync(join(tmpdir(), 'hive-e2e-')), cfg: { ...DEFAULTS, FILL_TAPS: 100 }, humanEvery: 5, minTapGapMs: 30, autoPayouts: false, autoSweep: false,
   uraClaimedTotal: async (a) => ura[a.toLowerCase()] ?? 0,
   uraLinks: async (a) => (a === addr ? [EVM] : []),
   payout: { enabled: true, address: 'NQ00', send: async (to, luna) => { sent.push({ to, luna }); return 'tx1'; } },

@@ -9,7 +9,7 @@ export const DEFAULTS = Object.freeze({
   DAILY_BUDGET_NIM: 500,
 });
 
-const nimToLuna = (nim) => BigInt(Math.round(nim * 100_000));
+export const nimToLuna = (nim) => BigInt(Math.round(nim * 100_000));
 
 export function dailyCeiling(uraClaimedToday, cfg = DEFAULTS) {
   const ura = Math.max(0, Math.floor(Number(uraClaimedToday) || 0));

@@ -93,6 +93,16 @@
       .rtabs { max-width:520px; margin-left:auto; margin-right:auto; }
     }
     .rempty { text-align:center; color:var(--dim); padding:26px 0; }
+    .err.info { color:var(--dim); }
+    
+    html.inpay { --sb:max(env(safe-area-inset-bottom,0px), 56px); }
+    html.inpay #addrField, html.inpay #loginBtn, html.inpay #loginHint, html.inpay #nameField { display:none; }
+    
+    .namecard .field { margin:14px 0 4px; }
+    .linkbtn { width:100%; min-height:44px; margin-top:4px; background:none; border:0; color:var(--dim); font-weight:700; font-size:14px; cursor:pointer; }
+    .namerow { display:flex; gap:8px; margin-top:6px; }
+    .namerow input { flex:1; min-width:0; min-height:44px; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.04); color:var(--ink); font-size:16px; }
+    .namerow button.main { width:auto; min-height:44px; padding:10px 18px; }
     label.tog { display:flex; align-items:center; justify-content:space-between; min-height:52px; border-bottom:1px solid var(--line); font-size:15px; }
     label.tog input[type=checkbox] { width:46px; height:26px; accent-color:var(--amber); }
     #leaf { position:absolute; left:10px; top:6px; width:52px; height:52px; z-index:3; transform-origin:50% 10%; animation:sway 3.2s ease-in-out infinite; }
@@ -131,11 +141,11 @@
         <h2>Garura Hive</h2>
         <p data-t="intro">Tap the honeycomb of the Garura tree, fill your jar with honey and get it as NIM.</p>
         <button class="main hot hidden" id="useNimiq" data-t="useNimiq">Use my Nimiq Pay address</button>
-        <div class="field"><label data-t="addrLbl">Your Nimiq address (NQ…)</label><input id="addr" class="mono" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="NQ.. .... .... .... .... .... .... .... ...." /></div>
-        <div class="field"><label data-t="nameLbl">Name on the ranking</label><input id="name" maxlength="24" autocomplete="nickname" /></div>
+        <div class="field" id="addrField"><label data-t="addrLbl">Your Nimiq address (NQ…)</label><input id="addr" class="mono" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="NQ.. .... .... .... .... .... .... .... ...." /></div>
+        <div class="field" id="nameField"><label data-t="nameLbl">Name on the ranking</label><input id="name" maxlength="24" autocomplete="nickname" /></div>
         <div class="err" id="loginErr"></div>
         <button class="main hot" id="loginBtn" data-t="start">Start</button>
-        <p style="font-size:12px" data-t="loginHint">Honey is only ever sent to this address; no signature, no payment. An exchange deposit address works too.</p>
+        <p style="font-size:12px" id="loginHint" data-t="loginHint">Honey is only ever sent to this address; no signature, no payment. An exchange deposit address works too.</p>
       </div>
     </div>
     <div class="bottom hidden" id="bottom">
@@ -151,6 +161,13 @@
       <a href="https://x.com/heylogramtv" target="_blank" rel="noopener" aria-label="X"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.8 3h3.1l-6.8 7.8L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.3-8.3L2 3h6.4l4.4 5.8L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z"/></svg></a>
       <a href="mailto:garurahive@heylogram.com" aria-label="garurahive@heylogram.com"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></a>
     </div></div></div>
+  <div class="sheet" id="sheetName"><div class="card namecard"><div class="top"><button class="back" data-back>‹</button><h3 data-t="nameTitle">Your name on the ranking</h3></div>
+    <p data-t="nameWhy">Shown on the ranking instead of your address. You can change it later in Settings.</p>
+    <div class="field"><input id="nameInput" maxlength="24" autocomplete="nickname" enterkeyhint="done" /></div>
+    <div class="err" id="nameErr"></div>
+    <button class="main hot" id="nameSave" data-t="save">Save</button>
+    <button class="linkbtn" id="nameSkip" data-t="notNow">Not now</button>
+  </div></div>
   <div class="sheet" id="sheetSet"><div class="card"><div class="top"><button class="back" data-back>‹</button><h3 data-t="set">Settings</h3></div>
     <label class="tog"><span data-t="sound">Sound</span><input type="checkbox" id="optSound" /></label>
     <label class="tog"><span data-t="vibe">Vibration</span><input type="checkbox" id="optVibe" /></label>
@@ -158,6 +175,8 @@
     <div id="accBox" class="hidden" style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
       <p style="font-size:12px;color:var(--dim)" data-t="acc">Account</p>
       <p id="accAddr" style="font-family:ui-monospace,monospace;font-size:13px;word-break:break-all"></p>
+      <p style="font-size:12px;color:var(--dim);margin-top:12px" data-t="nameLbl">Name on the ranking</p>
+      <div class="namerow"><input id="accName" maxlength="24" autocomplete="nickname" enterkeyhint="done" /><button class="main" id="accNameSave" data-t="save">Save</button></div>
       <p id="accPaid" style="margin-top:6px"></p>
       <button class="main" style="margin-top:12px" id="logoutBtn" data-t="logout">Use another address</button>
     </div></div></div>

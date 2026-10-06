@@ -10,8 +10,8 @@ It is the sister game of [URA](https://app.ura.heylogram.com) on Polygon: URA is
 
 - **Tapping alone yields a little.** Tapping through the whole day fills about **1 NIM**.
 - **URA claims raise today's limit.** Every 1,000 URA claimed in the URA game today adds **5 NIM** to today's limit (the daily limit tops out at 20 NIM). Players link their Nimiq address to their URA wallet inside the URA game, where wallet ownership is already proven.
-- **Honey collects in the jar.** Every full jar (1 NIM) moves to the ×N badge next to it.
-- **Withdraw from 1 NIM.** Withdrawals join a payout queue and are sent together about **once an hour** from the game's wallet. Players pay no fee.
+- **Honey collects in the jar.** Every 1 NIM collected fills a jar and adds to the ×N badge next to it.
+- **Payouts.** Inside Nimiq Pay they are **automatic**: about every 5 minutes the honey a player collected (from 0.01 NIM) is sent straight to their wallet, nothing to press. In a normal browser the player presses **Withdraw** from 1 NIM and the payout goes out within about 5 minutes. No fees either way.
 - **No randomness.** What you earn depends only on your own taps and URA claims. A short sum question appears now and then to keep bots away.
 - A global daily budget keeps total payouts bounded, whatever the number of players.
 
@@ -21,7 +21,8 @@ All numbers live in [`server/economy.mjs`](server/economy.mjs) and are covered b
 
 - **Wallet sign-in:** inside Nimiq Pay the app asks the wallet for the user's NIM address (`listAccounts` via `@nimiq/mini-app-sdk`) and signs in by itself, no typing. Honey is only ever **sent to** that address, so no signature is needed. Outside Nimiq Pay the player can type an address.
 - **Embedded hosting:** when the app is served inside a sandboxed frame, the host page may relay the same wallet calls (`hl-nimiq` message protocol, see `wallet` in [`client/src/main.js`](client/src/main.js)).
-- **NIM payouts:** the server sends basic NIM transactions with the Nimiq client (`@nimiq/core`), batched per hour, fee 0.
+- **NIM payouts:** the server sends basic NIM transactions with the Nimiq client (`@nimiq/core`) about every 5 minutes, fee 0. Failed sends stay queued and are retried.
+- **Nimiq Pay first:** inside Nimiq Pay the sign-in screen shows only the wallet connection; the address form is for normal browsers.
 - **Language** follows the Nimiq Pay setting (`getHostLanguage`); Turkish and English.
 
 ## Data
@@ -55,7 +56,7 @@ cd client && npm install --no-save playwright-core && npx playwright install chr
 node test/e2e.mjs && node test/wallet.mjs && node test/layout.mjs && node test/jar.mjs
 ```
 
-Server environment: `PORT`, `HOST`, `DATA_DIR`, `NIMIQ_NETWORK` (`MainAlbatross` / `TestAlbatross`), `PAYOUT_PRIVATE_KEY` (hex, payout wallet; keep it out of the repo), `PAYOUT_EVERY_MS` (default 1 hour), `URA_API`, `TEST_ADDRESSES` (optional, testing only).
+Server environment: `PORT`, `HOST`, `DATA_DIR`, `NIMIQ_NETWORK` (`MainAlbatross` / `TestAlbatross`), `PAYOUT_PRIVATE_KEY` (hex, payout wallet; keep it out of the repo), `PAYOUT_EVERY_MS` (live: 5 minutes), `AUTO_PAYOUT` (`0` turns automatic payouts off, Withdraw everywhere), `AUTO_MIN_NIM` (default 0.01), `URA_API`, `TEST_ADDRESSES` (optional, testing only).
 
 ## Third-party
 

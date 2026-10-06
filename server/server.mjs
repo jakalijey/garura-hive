@@ -31,6 +31,8 @@ export function createServer({
   minTapGapMs = 60,
   payoutEveryMs = Number(process.env.PAYOUT_EVERY_MS || 3_600_000),
   autoPayouts = true,
+  autoSweep = process.env.AUTO_PAYOUT !== '0',
+  autoMinNim = Number(process.env.AUTO_MIN_NIM || 0.01),
   testAddresses = process.env.TEST_ADDRESSES || '',
 } = {}) {
   mkdirSync(dataDir, { recursive: true });
@@ -115,6 +117,10 @@ export function createServer({
     if (batchRunning || !payout.enabled) return { sent: 0 };
     batchRunning = true; let sent = 0;
     try {
+      if (autoSweep) {
+        const min = E.nimToLuna(autoMinNim);
+        for (const p of Object.values(state.players)) if (p.auto && p.addr && !p.sending && p.jar >= min) { p.queued += p.jar; p.jar = 0n; dirty = true; }
+      }
       for (const [nq, p] of Object.entries(state.players)) {
         if (p.queued <= 0n || !p.addr) continue;
         const amount = p.queued;
@@ -148,7 +154,8 @@ export function createServer({
     return {
       address: p.addr, name: p.name,
       jar: E.formatNim(p.jar), jarLuna: p.jar.toString(),
-      queued: E.formatNim(p.queued), nextBatchAt: p.queued > 0n ? nextBatchAt() : null,
+      queued: E.formatNim(p.queued), nextBatchAt: p.queued > 0n || (autoSweep && p.auto) ? nextBatchAt() : null,
+      autoPayout: autoSweep && !!p.auto, autoMin: String(autoMinNim),
       earnedToday: E.formatNim(p.earnedToday),
       ceilingToday: E.formatNim(ceiling),
       honeyPerTap: E.formatNim(E.honeyPerTap(ceiling, cfg)),
@@ -156,6 +163,7 @@ export function createServer({
       canWithdraw: E.canWithdraw(p.jar, minFor(nq)),
       minWithdraw: String(minFor(nq).MIN_WITHDRAW_NIM),
       paidTotal: E.formatNim(p.paid),
+      totalHoney: E.formatNim(p.total),
       budgetLeftToday: E.formatNim(budgetLeft() > 0n ? budgetLeft() : 0n),
       payoutsEnabled: payout.enabled,
     };
@@ -186,6 +194,7 @@ export function createServer({
       }
       const p = player(nq);
       p.addr = addr; if (name) p.name = name; dirty = true;
+      p.auto = body.auto === true;
       const token = randomBytes(24).toString('hex');
       sessions.set(token, { nq, expires: now() + DAY_MS });
       return send(200, { token, address: addr, name: p.name });
@@ -231,6 +240,14 @@ export function createServer({
       dirty = true;
       claimedToday(s.nq, p).catch(() => {});
       return send(200, { ok: true, gained: E.formatNim(r.gained), jar: E.formatNim(p.jar), reason: r.reason });
+    }
+
+    if (path === '/api/name' && req.method === 'POST') {
+      const s = auth(body.token); if (!s) return send(401, { error: 'session_required' });
+      const name = cleanName(body.name);
+      if (!name) return send(400, { error: 'empty_name' });
+      const p = player(s.nq); p.name = name; dirty = true; save();
+      return send(200, { ok: true, name });
     }
 
     if (path === '/api/withdraw' && req.method === 'POST') {

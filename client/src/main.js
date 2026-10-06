@@ -23,7 +23,7 @@ const store = (() => {
 
 const TX = {
   en: { rank: 'Ranking', how: 'How to play', jar: 'Your jar', intro: 'Tap the honeycomb of the Garura tree, fill your jar with honey and get it as NIM.',
-        set: 'Settings', sound: 'Sound', vibe: 'Vibration', langLbl: 'Language', useNimiq: 'Connect with Nimiq Pay', walletNo: 'Nimiq Pay did not share an address. You can type it below.', addrLbl: 'Your Nimiq address (NQ…)', nameLbl: 'Name on the ranking', start: 'Start',
+        set: 'Settings', sound: 'Sound', vibe: 'Vibration', langLbl: 'Language', useNimiq: 'Connect with Nimiq Pay', walletNo: 'Nimiq Pay did not share an address. You can type it below.', walletAsk: 'Asking Nimiq Pay for your address…', walletIn: 'Address received, signing in…', walletSlow: 'Nimiq Pay did not answer. Tap “Connect with Nimiq Pay” again or type your address.', addrLbl: 'Your Nimiq address (NQ…)', nameLbl: 'Name on the ranking', start: 'Start',
         loginHint: 'Honey is only ever sent to this address; no signature, no payment. An exchange deposit address works too.',
         today: 'Today', ceil: 'Limit', ura: 'URA claimed', wd: 'Withdraw', wdN: (a) => `Withdraw ${a} NIM`, acc: 'Account', logout: 'Use another address',
         badAddr: 'That is not a valid Nimiq address. Check it (it starts with NQ).', tooMany: 'Too many sign-ins from here, try again later.', net: 'Connection problem, try again.',
@@ -35,17 +35,20 @@ const TX = {
         how3: 'Claim URA in the URA game (Garura tree) and link this Nimiq address there: every 1,000 URA claimed today adds +5 NIM to today\'s limit (up to 20).',
         how4: 'From 1 NIM you can withdraw. Payouts go out together about once an hour from the game\'s wallet; you pay no fee.',
         how5: 'A short sum question appears now and then to keep bots away. Nothing here depends on luck.',
-        hComb: 'Honeycomb', hCombT: (per) => `Tap anywhere: every tap puts ${per} NIM of honey in your jar. The cells fill as your day goes on (about 1 NIM a day by tapping alone).`,
+        hComb: 'Honeycomb', hCombT: (per) => `Tap anywhere: every tap puts ${per} NIM of honey in your jar. The cells fill as your day goes on (about 1 NIM a day by tapping alone). When every cell is full you have reached today's limit: claim URA to raise it, or a new day starts at 00:00 UTC.`,
         hJar: 'Jar', hJarT: (m) => `Honey collects here. A full jar = ${m} NIM.`,
         hFull: 'Full jars', hFullT: 'Every full jar moves to this badge. ×2 means 2 jars are ready to withdraw.',
         hBee: 'Bees', hBeeT: "Claim URA in the Garura tree and link this Nimiq address there: every 1,000 URA claimed today brings a bee and +5 NIM to today's limit (the daily limit tops out at 20 NIM).",
         hLeaf: 'URA leaf', hLeafT: 'Top left. Tap it to open URA. When you have claimed URA today, turquoise sparkles drift down from it.',
-        hWd: 'Withdraw', hWdT: "Your jars join the payout queue and are sent together about once an hour from the game's wallet. You pay no fee.",
+        hWd: 'Withdraw', hWdT: "Your jars join the payout queue and are sent from the game's wallet within about 5 minutes. You pay no fee.",
+        hAuto: 'Auto payout', hAutoT: (m) => `Every 5 minutes the honey you collected (from ${m} NIM) is sent straight to your wallet from the game's wallet. You pay no fee.`,
+        hFullAuto: 'Every full jar (1 NIM collected) adds to this badge. ×2 means you have filled 2 jars so far.',
+        collected: 'Honey collected', nameTitle: 'Your name on the ranking', nameWhy: 'Shown on the ranking instead of your address. You can change it later in Settings.', save: 'Save', notNow: 'Not now', saved: 'Saved', nameEmpty: 'Write a name first.',
         queuedBtn: (a, at) => `${a} NIM in the payout queue · ${at}`,
         rkToday: 'Today', rkAll: 'All time', rkYou: 'You', rkFoot: (n) => `Top 20 · ${n} ${n === 1 ? 'player' : 'players'}`,
         rkNone: 'You are not on the list yet. Tap the honeycomb and you are in.', rkNoneToday: 'No honey from you today yet. Tap and climb.', rkEmptyToday: 'Nobody has collected honey today yet. Be the first!' },
   tr: { rank: 'Sıralama', how: 'Nasıl oynanır', jar: 'Kavanozun', intro: 'Garura ağacının peteğine dokun, kavanozunu balla doldur, NIM olarak al.',
-        set: 'Ayarlar', sound: 'Ses', vibe: 'Titreşim', langLbl: 'Dil', useNimiq: 'Nimiq Pay ile bağlan', walletNo: 'Nimiq Pay adres vermedi. Aşağıya yazabilirsin.', addrLbl: 'Nimiq adresin (NQ…)', nameLbl: 'Sıralamada görünecek isim', start: 'Başla',
+        set: 'Ayarlar', sound: 'Ses', vibe: 'Titreşim', langLbl: 'Dil', useNimiq: 'Nimiq Pay ile bağlan', walletNo: 'Nimiq Pay adres vermedi. Aşağıya yazabilirsin.', walletAsk: "Nimiq Pay'e adresin soruluyor…", walletIn: 'Adres geldi, giriş yapılıyor…', walletSlow: 'Nimiq Pay cevap vermedi. “Nimiq Pay ile bağlan”a tekrar dokun ya da adresini yaz.', addrLbl: 'Nimiq adresin (NQ…)', nameLbl: 'Sıralamada görünecek isim', start: 'Başla',
         loginHint: 'Bal yalnızca bu adrese gönderilir; imza yok, ödeme yok. Borsadaki yatırma adresin de olur.',
         today: 'Bugün', ceil: 'Sınır', ura: 'URA claim', wd: 'Çek', wdN: (a) => `${a} NIM çek`, acc: 'Hesap', logout: 'Başka adres kullan',
         badAddr: 'Bu geçerli bir Nimiq adresi değil. Kontrol et (NQ ile başlar).', tooMany: 'Buradan çok fazla giriş yapıldı, biraz sonra dene.', net: 'Bağlantı sorunu, tekrar dene.',
@@ -57,12 +60,15 @@ const TX = {
         how3: "URA oyununda (Garura ağacı) URA claim et ve bu Nimiq adresini orada bağla: bugün claim ettiğin her 1000 URA bugünkü sınırına +5 NIM ekler (en çok 20).",
         how4: "1 NIM'den itibaren çekebilirsin. Ödemeler oyunun cüzdanından yaklaşık saatte bir toplu gönderilir; ücret ödemezsin.",
         how5: 'Botlara karşı ara sıra kısa bir toplama sorusu çıkar. Burada hiçbir şey şansa bağlı değil.',
-        hComb: 'Petek', hCombT: (per) => `Herhangi bir yere dokun: her dokunuş kavanozuna ${per} NIM bal koyar. Gün ilerledikçe gözler dolar (tek başına dokunarak günde yaklaşık 1 NIM).`,
+        hComb: 'Petek', hCombT: (per) => `Herhangi bir yere dokun: her dokunuş kavanozuna ${per} NIM bal koyar. Gün ilerledikçe gözler dolar (tek başına dokunarak günde yaklaşık 1 NIM). Gözlerin hepsi dolunca bugünkü sınırına ulaşmışsın demektir: URA claim edip sınırı yükselt ya da gece 03:00'te (Türkiye saati) yeni gün başlar.`,
         hJar: 'Kavanoz', hJarT: (m) => `Bal burada birikir. Dolu bir kavanoz = ${m} NIM.`,
         hFull: 'Dolu kavanozlar', hFullT: 'Dolan her kavanoz bu rozete geçer. ×2 = çekmeye hazır 2 kavanoz.',
         hBee: 'Arılar', hBeeT: "Garura ağacında URA claim et ve bu Nimiq adresini orada bağla: bugün claim ettiğin her 1000 URA bir arı ve bugünkü sınırına +5 NIM getirir (günlük sınır en çok 20 NIM).",
         hLeaf: 'URA yaprağı', hLeafT: 'Sol üstte. Dokununca URA açılır. Bugün URA claim ettiysen ondan turkuaz ışıltılar dökülür.',
-        hWd: 'Çek', hWdT: "Kavanozların ödeme sırasına girer ve oyunun cüzdanından yaklaşık saatte bir toplu gönderilir. Ücret ödemezsin.",
+        hWd: 'Çek', hWdT: "Kavanozların ödeme sırasına girer ve oyunun cüzdanından yaklaşık 5 dakika içinde gönderilir. Ücret ödemezsin.",
+        hAuto: 'Otomatik ödeme', hAutoT: (m) => `Her 5 dakikada bir topladığın bal (${m} NIM'den itibaren) oyunun cüzdanından doğrudan senin cüzdanına gönderilir. Ücret ödemezsin.`,
+        hFullAuto: 'Her dolan kavanoz (toplanan 1 NIM) bu rozete eklenir. ×2 = şimdiye kadar 2 kavanoz doldurdun.',
+        collected: 'Topladığın bal', nameTitle: 'Sıralamada görünecek ismin', nameWhy: "Sıralamada adresin yerine bu görünür. Sonra Ayarlar'dan değiştirebilirsin.", save: 'Kaydet', notNow: 'Şimdi değil', saved: 'Kaydedildi', nameEmpty: 'Önce bir isim yaz.',
         queuedBtn: (a, at) => `${a} NIM ödeme sırasında · ${at}`,
         rkToday: 'Bugün', rkAll: 'Tüm zamanlar', rkYou: 'Sen', rkFoot: (n) => `İlk 20 · ${n} oyuncu`,
         rkNone: 'Henüz listede değilsin. Peteğe dokun, listeye gir.', rkNoneToday: 'Bugün henüz bal toplamadın. Dokun ve yüksel.', rkEmptyToday: 'Bugün henüz kimse bal toplamadı. İlk sen ol!' },
@@ -88,7 +94,8 @@ document.querySelectorAll('[data-back]').forEach((b) => b.addEventListener('clic
 document.querySelectorAll('.sheet').forEach((s) => s.addEventListener('click', (e) => { if (e.target === s) history.back(); }));
 
 const api = async (path, body) => {
-  const r = await fetch(API + path, body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : undefined);
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15_000);
+  const r = await fetch(API + path, { signal: ctl.signal, ...(body ? { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) } : {}) }).finally(() => clearTimeout(t));
   return { status: r.status, ...(await r.json().catch(() => ({}))) };
 };
 let token = null;
@@ -106,17 +113,25 @@ let render = function render() {
   $('hud').classList.toggle('hidden', !inGame); $('bottom').classList.toggle('hidden', !inGame); $('rankBtn').classList.toggle('hidden', !inGame);
   if (!me) return;
   const num = (s) => Number(s) || 0;
-  $('jar').textContent = me.jar;
+  const auto = !!me.autoPayout;
+  $('jar').textContent = auto ? me.totalHoney : me.jar;
+  document.querySelector('#hud .lbl').textContent = T(auto ? 'collected' : 'jar');
   const at = me.nextBatchAt ? new Date(me.nextBatchAt).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '';
-  const wd = $('wdBtn'); wd.disabled = !me.canWithdraw; wd.classList.toggle('hot', !!me.canWithdraw);
-  wd.innerHTML = '';
-  wd.append(me.canWithdraw ? T('wdN', me.jar) : T('wd'));
-  if (num(me.queued) > 0) { const sm = document.createElement('small'); sm.textContent = T('queuedBtn', me.queued, at); wd.append(sm); }
+  const wd = $('wdBtn');
+  wd.classList.toggle('hidden', auto);
+  if (auto) {
+    document.documentElement.classList.add('inpay');
+  } else {
+    wd.disabled = !me.canWithdraw; wd.classList.toggle('hot', !!me.canWithdraw);
+    wd.innerHTML = '';
+    wd.append(me.canWithdraw ? T('wdN', me.jar) : T('wd'));
+    if (num(me.queued) > 0) { const sm = document.createElement('small'); sm.textContent = T('queuedBtn', me.queued, at); wd.append(sm); }
+  }
   $('leaf').classList.remove('hidden');
   const ceil = num(me.ceilingToday) || 1;
-  const per = num(me.minWithdraw || 1), whole = Math.floor(num(me.jar) / per + 1e-9), frac = num(me.jar) / per - whole;
-  scene.setState({ progress: Math.min(1, num(me.earnedToday) / ceil), jarRatio: frac > 0.0001 ? Math.max(0.06, Math.sqrt(frac)) : 0, fullJars: whole, ready: !!me.canWithdraw, bees: 1 + Math.floor(num(me.uraClaimedToday) / 1000) });
-  renderHow(me.honeyPerTap, me.minWithdraw);
+  const per = auto ? 1 : num(me.minWithdraw || 1), base = num(auto ? me.totalHoney : me.jar), whole = Math.floor(base / per + 1e-9), frac = base / per - whole;
+  scene.setState({ progress: Math.min(1, num(me.earnedToday) / ceil), jarRatio: frac > 0.0001 ? Math.max(0.06, Math.sqrt(frac)) : 0, fullJars: whole, ready: !auto && !!me.canWithdraw, bees: 1 + Math.floor(num(me.uraClaimedToday) / 1000) });
+  renderHow(me.honeyPerTap, auto ? '1' : me.minWithdraw, auto ? me.autoMin : null);
   const lr = $('leaf').getBoundingClientRect(), sr = $('stage').getBoundingClientRect();
   scene.setDust(num(me.uraClaimedToday) > 0, lr.left - sr.left + lr.width / 2, lr.top - sr.top + lr.height * 0.85);
   $('accAddr').textContent = me.address; $('accPaid').textContent = T('paid', me.paidTotal);
@@ -131,8 +146,9 @@ const ICON = {
   leaf: `<img src="ura-leaf.png" alt="" />`,
   wd: `<svg viewBox="-30 -30 60 60"><rect x="-26" y="-12" width="52" height="24" rx="8" fill="#d97706"/><path d="M-6 -2 L0 5 L6 -2 M0 5 L0 -8" stroke="#1a0d2e" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
 };
-function renderHow(per, min) {
-  const rows = [['comb', 'hComb', T('hCombT', per)], ['jar', 'hJar', T('hJarT', min)], ['full', 'hFull', T('hFullT')], ['bee', 'hBee', T('hBeeT')], ['leaf', 'hLeaf', T('hLeafT')], ['wd', 'hWd', T('hWdT')]];
+function renderHow(per, min, autoMin) {
+  const rows = [['comb', 'hComb', T('hCombT', per)], ['jar', 'hJar', T('hJarT', min)], ['full', 'hFull', autoMin ? T('hFullAuto') : T('hFullT')], ['bee', 'hBee', T('hBeeT')], ['leaf', 'hLeaf', T('hLeafT')],
+    autoMin ? ['wd', 'hAuto', T('hAutoT', autoMin)] : ['wd', 'hWd', T('hWdT')]];
   $('howList').innerHTML = rows.map(([ic, h, t]) => `<div class="it"><div class="ic">${ICON[ic]}</div><div><b>${T(h)}</b><span>${t}</span></div></div>`).join('');
 }
 
@@ -140,15 +156,45 @@ async function refresh() {
   if (!token) return false;
   const r = await api('/api/me?token=' + encodeURIComponent(token)).catch(() => null);
   if (!r || r.status !== 200) return false;
-  me = r; render(); return true;
+  me = r; render(); askNameOnce(); return true;
 }
 
-async function signIn(address, name) {
-  $('loginErr').textContent = ''; $('loginBtn').disabled = true;
+function askNameOnce() {
+  if (!me || !me.autoPayout || me.name || store.get('nameAsked') || openSheets.length) return;
+  store.set('nameAsked', '1');
+  $('nameInput').value = store.get('name') || ''; $('nameErr').textContent = '';
+  openSheet('sheetName'); setTimeout(() => $('nameInput').focus(), 250);
+}
+async function saveName(value) {
+  const name = String(value || '').trim();
+  if (!name) return T('nameEmpty');
+  const r = await api('/api/name', { token, name }).catch(() => null);
+  if (!r || !r.ok) return T('net');
+  me.name = r.name; store.set('name', r.name);
+  return null;
+}
+$('nameSave').onclick = async () => {
+  $('nameSave').disabled = true;
+  const err = await saveName($('nameInput').value);
+  $('nameSave').disabled = false;
+  if (err) $('nameErr').textContent = err; else history.back();
+};
+$('nameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('nameSave').click(); });
+$('nameSkip').onclick = () => history.back();
+$('accNameSave').onclick = async () => {
+  const b = $('accNameSave'); b.disabled = true;
+  const err = await saveName($('accName').value);
+  b.disabled = false; b.textContent = err || T('saved');
+  setTimeout(() => { b.textContent = T('save'); }, 1800);
+};
+$('accName').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('accNameSave').click(); });
+
+async function signIn(address, name, auto = false) {
+  $('loginErr').textContent = ''; $('loginErr').classList.remove('info'); $('loginBtn').disabled = true;
   try {
     const device = store.get('device') || Array.from(crypto.getRandomValues(new Uint8Array(32)), (b) => b.toString(16).padStart(2, '0')).join('');
     store.set('device', device);
-    const r = await api('/api/session', { address, name, device });
+    const r = await api('/api/session', { address, name, device, auto });
     if (!r.token) { $('loginErr').textContent = r.error === 'bad_address' ? T('badAddr') : r.error === 'too_many_sessions' ? T('tooMany') : T('net'); return; }
     token = r.token; store.set('token', token); store.set('address', r.address); store.set('name', r.name || '');
     await refresh();
@@ -169,14 +215,18 @@ const wallet = (() => {
   const viaBridge = () => new Promise((resolve) => {
     if (!inFrame) return resolve(null);
     const on = (e) => { const v = e.data; if (e.source === window.parent && v?.tur === 'hl-nimiq' && v.islem === 'durum') { window.removeEventListener('message', on); clearTimeout(t); resolve(v.var ? {
-      listAccounts: () => new Promise((ok, no) => { const id = ++seq; waiting.set(id, { ok, no }); window.parent.postMessage({ tur: 'hl-nimiq', islem: 'cagir', id, yontem: 'listAccounts', args: [] }, '*'); }),
+      listAccounts: () => new Promise((ok, no) => {
+        const id = ++seq; waiting.set(id, { ok, no });
+        setTimeout(() => { if (waiting.delete(id)) no(Object.assign(new Error('timeout'), { code: 'timeout' })); }, 120_000);
+        window.parent.postMessage({ tur: 'hl-nimiq', islem: 'cagir', id, yontem: 'listAccounts', args: [] }, '*');
+      }),
     } : null); } };
     window.addEventListener('message', on);
     const t = setTimeout(() => { window.removeEventListener('message', on); resolve(null); }, 11_000);
     window.parent.postMessage({ tur: 'hl-nimiq', islem: 'sor' }, '*');
   });
   return {
-    get: () => (ready ||= (window.nimiq || !inFrame ? init({ timeout: 4000 }).catch(() => null) : viaBridge())),
+    get: () => (ready ||= (inFrame ? viaBridge() : init({ timeout: 4000 }).catch(() => null))),
     async address() {
       const n = await this.get(); if (!n) return null;
       const list = await n.listAccounts();
@@ -184,16 +234,25 @@ const wallet = (() => {
     },
   };
 })();
-let walletTried = false;
+let walletTried = false, walletBusy = false;
 async function walletConnect(auto) {
-  if (token || (auto && walletTried)) return; walletTried = true;
+  if (token || walletBusy || (auto && walletTried)) return; walletTried = true; walletBusy = true;
+  const say = (t, err = false) => { $('loginErr').textContent = t; $('loginErr').classList.toggle('info', !err); };
   try {
-    const a = await wallet.address(); if (!a || token) return;
-    $('addr').value = a;
-    await signIn(a, $('name').value.trim() || store.get('name') || '');
-  } catch { if (!auto) $('loginErr').textContent = T('walletNo'); }
+    say(T('walletAsk'));
+    const a = await wallet.address();
+    if (!a) { say(T('walletNo'), true); return; }
+    if (token) return;
+    $('addr').value = a; say(T('walletIn'));
+    await signIn(a, $('name').value.trim() || store.get('name') || '', true);
+  } catch (e) { say(e?.code === 'timeout' ? T('walletSlow') : T('walletNo') + (e?.message && e.message !== 'wallet' ? ` (${String(e.message).slice(0, 80)})` : ''), true); }
+  finally { walletBusy = false; }
 }
-wallet.get().then((n) => { if (!n) return; $('useNimiq').classList.remove('hidden'); $('useNimiq').onclick = () => walletConnect(false); });
+if (window.nimiq || window.nimiqPay || window.ReactNativeWebView) document.documentElement.classList.add('inpay');
+wallet.get().then((n) => {
+  document.documentElement.classList.toggle('inpay', !!n);
+  if (!n) return; $('useNimiq').classList.remove('hidden'); $('useNimiq').onclick = () => walletConnect(false);
+});
 
 let queue = [], busy = false, pendingAnswer = null;
 function tap(x, y) { if (!me || $('q').style.display === 'flex') return; sound.tap(); if (queue.length < 20) queue.push({ x, y }); pump(); }
@@ -252,7 +311,7 @@ async function renderRank() {
 $('rankBtn').onclick = () => { openSheet('sheetRank'); renderRank(); };
 $('rkToday').onclick = () => { rkScope = 'today'; store.set('rank', 'today'); renderRank(); };
 $('rkAll').onclick = () => { rkScope = 'all'; store.set('rank', 'all'); renderRank(); };
-$('setBtn').onclick = () => { $('optSound').checked = opt.sound; $('optVibe').checked = opt.vibe; openSheet('sheetSet'); };
+$('setBtn').onclick = () => { $('optSound').checked = opt.sound; $('optVibe').checked = opt.vibe; $('accName').value = me?.name || ''; openSheet('sheetSet'); };
 $('optSound').onchange = (e) => { opt.sound = e.target.checked; sound.setEnabled(opt.sound); store.set('sound', opt.sound ? '1' : '0'); if (opt.sound) sound.tap(); };
 $('optVibe').onchange = (e) => { opt.vibe = e.target.checked; store.set('vibe', opt.vibe ? '1' : '0'); buzz(20); };
 $('logoutBtn').onclick = () => { token = null; me = null; store.del('token'); $('accBox').classList.add('hidden'); history.back(); render(); };

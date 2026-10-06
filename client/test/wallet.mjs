@@ -35,7 +35,7 @@ const topUrl = `http://127.0.0.1:${top.address().port}/`;
 const browser = await chromium.launch({ executablePath: CHROME, args: ['--headless=new', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const R = {}; let fail = 0;
 const check = (k, ok, info = '') => { R[k] = ok ? 'OK' : 'FAIL ' + info; if (!ok) fail++; };
-const fake = (addr, onlyTop) => `(() => { if (${onlyTop} && window !== window.top) return; window.__calls = 0;
+const fake = (addr, onlyTop) => `(() => { if (${onlyTop} && window !== window.top) { window.nimiq = { listAccounts: () => new Promise(() => {}) }; return; } window.__calls = 0;
   window.nimiq = { listAccounts: async () => { window.__calls++; return [${JSON.stringify(addr)}]; } }; })();`;
 try {
   for (const [mode, url, onlyTop] of [['direct', app, false], ['bridge', topUrl, true]]) {
@@ -49,12 +49,46 @@ try {
     for (let i = 0; i < 40 && !inGame; i++) { await p.waitForTimeout(250); inGame = await f().isVisible('#bottom').catch(() => false); }
     const lb = await (await fetch(process.env.VITE_API + '/api/leaderboard')).json().catch(() => ({}));
     const acc = await f().evaluate(() => document.querySelector('#accAddr')?.textContent || '').catch(() => '');
-    const frameHasWallet = mode === 'bridge' ? await f().evaluate(() => !!window.nimiq) : true;
+    const frameHasWallet = mode === 'bridge' ? await f().evaluate(() => !!window.nimiq) : false;
     if (process.env.DBG) console.log(mode, await f().evaluate(() => ({ useN: !document.querySelector('#useNimiq').classList.contains('hidden'), addr: document.querySelector('#addr').value, err: document.querySelector('#loginErr').textContent })).catch((e) => String(e)));
     check(mode + ':signedInByItself', inGame, 'not in game');
     check(mode + ':walletAddressUsed', acc === addr, acc + ' vs ' + addr);
-    if (mode === 'bridge') check('bridge:frameHasNoProvider', frameHasWallet === false);
+    if (mode === 'bridge') check('bridge:silentFrameProviderIgnored', frameHasWallet === true && acc === addr);
+    const ui = await f().evaluate(() => ({ strip: !!document.querySelector('#auto'), wd: !document.querySelector('#wdBtn').classList.contains('hidden'),
+      inpay: document.documentElement.classList.contains('inpay'), addrShown: getComputedStyle(document.querySelector('#addrField')).display !== 'none', sb: getComputedStyle(document.querySelector('#bottom')).paddingBottom }));
+    check(mode + ':noWithdrawNoStripInPay', !ui.wd && !ui.strip, JSON.stringify(ui));
+    check(mode + ':payModeNoAddressForm', ui.inpay && !ui.addrShown, JSON.stringify(ui));
+    check(mode + ':roomForNavBar', parseFloat(ui.sb) >= 48, ui.sb);
     check(mode + ':noErrors', errs.length === 0, errs.join('|'));
+    await ctx.close();
+  }
+  {
+    const addr = Nimiq.KeyPair.generate().toAddress().toUserFriendlyAddress();
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
+    await ctx.addInitScript(fake(addr, false));
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+    await p.goto(app); await p.waitForSelector('#bottom:not(.hidden)', { timeout: 10000 });
+    const loginNameHidden = await p.evaluate(() => getComputedStyle(document.querySelector('#nameField')).display === 'none');
+    await p.waitForSelector('#sheetName.on', { timeout: 5000 }).catch(() => {});
+    const asked = await p.locator('#sheetName.on').count();
+    await p.fill('#nameInput', 'Kovan'); await p.click('#nameSave'); await p.waitForTimeout(600);
+    const closed = (await p.locator('#sheetName.on').count()) === 0;
+    const token = await p.evaluate(() => localStorage.getItem('hive_token'));
+    const me1 = await (await fetch(process.env.VITE_API + '/api/me?token=' + token)).json();
+    await p.reload(); await p.waitForSelector('#bottom:not(.hidden)', { timeout: 10000 }); await p.waitForTimeout(1500);
+    const askedAgain = await p.locator('#sheetName.on').count();
+    await p.click('#setBtn'); await p.waitForTimeout(300);
+    const prefilled = await p.inputValue('#accName');
+    await p.fill('#accName', 'Kovan Beyi'); await p.click('#accNameSave'); await p.waitForTimeout(600);
+    const btnText = await p.textContent('#accNameSave');
+    const me2 = await (await fetch(process.env.VITE_API + '/api/me?token=' + token)).json();
+    check('name:loginNameFieldHiddenInPay', loginNameHidden);
+    check('name:askedOnceAfterConnect', asked === 1, String(asked));
+    check('name:savedOnServer', closed && me1.name === 'Kovan', JSON.stringify({ closed, name: me1.name }));
+    check('name:notAskedAgain', askedAgain === 0, String(askedAgain));
+    check('name:editableInSettings', prefilled === 'Kovan' && me2.name === 'Kovan Beyi' && btnText === 'Kaydedildi', JSON.stringify({ prefilled, name: me2.name, btnText }));
+    check('name:noErrors', errs.length === 0, errs.join('|'));
+    await p.screenshot({ path: join(process.env.OUT || '.', 'name-settings.png') });
     await ctx.close();
   }
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
@@ -62,6 +96,11 @@ try {
   await p.goto(topUrl); await p.waitForTimeout(5000);
   const f = p.frames().find((x) => x.url().startsWith(app));
   check('plainBrowser:formShown', await f.isVisible('#loginBtn') && !(await f.isVisible('#useNimiq')));
+  check('plainBrowser:notPayMode', !(await f.evaluate(() => document.documentElement.classList.contains('inpay'))) && await f.isVisible('#addr'));
+  await f.fill('#addr', Nimiq.KeyPair.generate().toAddress().toUserFriendlyAddress()); await f.click('#loginBtn');
+  await f.waitForSelector('#bottom:not(.hidden)', { timeout: 8000 });
+  const web = await f.evaluate(() => ({ wd: !document.querySelector('#wdBtn').classList.contains('hidden') }));
+  check('plainBrowser:withdrawKept', web.wd, JSON.stringify(web));
   check('plainBrowser:noErrors', errs.length === 0, errs.join('|'));
   await ctx.close();
 } finally { await browser.close(); await vite.close(); top.close(); game.stopAll(); game.close(); }
