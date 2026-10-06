@@ -1,0 +1,25 @@
+{
+  "name": "garura-honeycomb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "@nimiq/mini-app-sdk": "^0.2.4",
+    "pixi.js": "^8.19.0"
+  },
+  "devDependencies": {
+    "@nimiq/core": "^2.22.0",
+    "viem": "^2.57.1",
+    "vite": "^6.4.3",
+    "vite-plugin-singlefile": "^2.3.3"
+  }
+}

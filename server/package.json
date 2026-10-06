@@ -1,0 +1,18 @@
+{
+  "name": "garura-honeycomb-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/economy.test.mjs test/identity.test.mjs test/server.test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@nimiq/core": "^2.22.0",
+    "viem": "^2.57.1"
+  }
+}
