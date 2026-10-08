@@ -21,14 +21,14 @@ const appSrv = http.createServer((q, s) => { s.setHeader('content-type', 'text/h
 await new Promise((r) => appSrv.listen(0, '127.0.0.1', r));
 const app = `http://127.0.0.1:${appSrv.address().port}/`;
 const vite = { close: async () => appSrv.close() };
-const top = http.createServer((q, s) => { s.setHeader('content-type', 'text/html'); s.end(`<!doctype html><body style="margin:0">
+const top = http.createServer((q, s) => { const late = q.url.includes('late=1') ? 3000 : 0; s.setHeader('content-type', 'text/html'); s.end(`<!doctype html><body style="margin:0">
 <iframe id="f" src="${app}" sandbox="allow-scripts allow-forms allow-popups allow-modals" style="position:fixed;inset:0;width:100%;height:100%;border:0"></iframe>
 <script>
 const OK = new Set(['listAccounts','getBalance','sign','sendBasicTransaction','sendBasicTransactionWithData']);
-addEventListener('message', (ev) => { const w = document.getElementById('f').contentWindow; if (ev.source !== w) return; const v = ev.data; if (!v || v.tur !== 'hl-nimiq') return;
+setTimeout(() => addEventListener('message', (ev) => { const w = document.getElementById('f').contentWindow; if (ev.source !== w) return; const v = ev.data; if (!v || v.tur !== 'hl-nimiq') return;
   if (v.islem === 'sor') { w.postMessage({ tur:'hl-nimiq', islem:'durum', var: !!window.nimiq }, '*'); return; }
   if (v.islem === 'cagir') { if (!OK.has(v.yontem)) return w.postMessage({ tur:'hl-nimiq', islem:'sonuc', id:v.id, ok:false, hata:{kod:'desteklenmiyor'} }, '*');
-    window.nimiq[v.yontem](...(v.args||[])).then((r) => w.postMessage({ tur:'hl-nimiq', islem:'sonuc', id:v.id, ok:true, sonuc:r }, '*'), (e) => w.postMessage({ tur:'hl-nimiq', islem:'sonuc', id:v.id, ok:false, hata:{mesaj:String(e)} }, '*')); } });
+    window.nimiq[v.yontem](...(v.args||[])).then((r) => w.postMessage({ tur:'hl-nimiq', islem:'sonuc', id:v.id, ok:true, sonuc:r }, '*'), (e) => w.postMessage({ tur:'hl-nimiq', islem:'sonuc', id:v.id, ok:false, hata:{mesaj:String(e)} }, '*')); } }), ${late});   // late = host page hydrates after the frame (slow phone)
 </script></body>`); });
 await new Promise((r) => top.listen(0, '127.0.0.1', r));
 const topUrl = `http://127.0.0.1:${top.address().port}/`;
@@ -38,7 +38,7 @@ const check = (k, ok, info = '') => { R[k] = ok ? 'OK' : 'FAIL ' + info; if (!ok
 const fake = (addr, onlyTop) => `(() => { if (${onlyTop} && window !== window.top) { window.nimiq = { listAccounts: () => new Promise(() => {}) }; return; } window.__calls = 0;
   window.nimiq = { listAccounts: async () => { window.__calls++; return [${JSON.stringify(addr)}]; } }; })();`;
 try {
-  for (const [mode, url, onlyTop] of [['direct', app, false], ['bridge', topUrl, true]]) {
+  for (const [mode, url, onlyTop] of [['direct', app, false], ['bridge', topUrl, true], ['bridgeLate', topUrl + '?late=1', true]]) {
     const addr = Nimiq.KeyPair.generate().toAddress().toUserFriendlyAddress();
     const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: 'tr-TR' });
     await ctx.addInitScript(fake(addr, onlyTop));
@@ -49,11 +49,11 @@ try {
     for (let i = 0; i < 40 && !inGame; i++) { await p.waitForTimeout(250); inGame = await f().isVisible('#bottom').catch(() => false); }
     const lb = await (await fetch(process.env.VITE_API + '/api/leaderboard')).json().catch(() => ({}));
     const acc = await f().evaluate(() => document.querySelector('#accAddr')?.textContent || '').catch(() => '');
-    const frameHasWallet = mode === 'bridge' ? await f().evaluate(() => !!window.nimiq) : false;
+    const frameHasWallet = mode !== 'direct' ? await f().evaluate(() => !!window.nimiq) : false;
     if (process.env.DBG) console.log(mode, await f().evaluate(() => ({ useN: !document.querySelector('#useNimiq').classList.contains('hidden'), addr: document.querySelector('#addr').value, err: document.querySelector('#loginErr').textContent })).catch((e) => String(e)));
     check(mode + ':signedInByItself', inGame, 'not in game');
     check(mode + ':walletAddressUsed', acc === addr, acc + ' vs ' + addr);
-    if (mode === 'bridge') check('bridge:silentFrameProviderIgnored', frameHasWallet === true && acc === addr);
+    if (mode !== 'direct') check(mode + ':silentFrameProviderIgnored', frameHasWallet === true && acc === addr);
     const ui = await f().evaluate(() => ({ strip: !!document.querySelector('#auto'), wd: !document.querySelector('#wdBtn').classList.contains('hidden'),
       inpay: document.documentElement.classList.contains('inpay'), addrShown: getComputedStyle(document.querySelector('#addrField')).display !== 'none', sb: getComputedStyle(document.querySelector('#bottom')).paddingBottom }));
     check(mode + ':noWithdrawNoStripInPay', !ui.wd && !ui.strip, JSON.stringify(ui));

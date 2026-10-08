@@ -205,7 +205,7 @@ $('loginBtn').onclick = () => signIn($('addr').value, $('name').value);
 ['addr', 'name'].forEach((id) => $(id).addEventListener('focus', (e) => setTimeout(() => e.target.scrollIntoView({ block: 'center', behavior: 'smooth' }), 250)));
 
 const wallet = (() => {
-  let ready = null, seq = 0; const waiting = new Map();
+  let ready = null, lastNone = false, seq = 0; const waiting = new Map();
   const inFrame = (() => { try { return window.parent !== window; } catch { return true; } })();
   window.addEventListener('message', (e) => {
     const v = e.data; if (e.source !== window.parent || !v || v.tur !== 'hl-nimiq' || v.islem !== 'sonuc') return;
@@ -222,13 +222,21 @@ const wallet = (() => {
       }),
     } : null); } };
     window.addEventListener('message', on);
-    const t = setTimeout(() => { window.removeEventListener('message', on); resolve(null); }, 11_000);
-    window.parent.postMessage({ tur: 'hl-nimiq', islem: 'sor' }, '*');
+    const ask = () => window.parent.postMessage({ tur: 'hl-nimiq', islem: 'sor' }, '*');
+    const again = setInterval(ask, 500);
+    const t = setTimeout(() => { window.removeEventListener('message', on); clearInterval(again); resolve(null); }, 12_000);
+    const stop = () => { clearInterval(again); window.removeEventListener('message', stopOn); };
+    const stopOn = (e) => { if (e.source === window.parent && e.data?.tur === 'hl-nimiq' && e.data.islem === 'durum') stop(); };
+    window.addEventListener('message', stopOn);
+    ask();
   });
   return {
-    get: () => (ready ||= (inFrame ? viaBridge() : init({ timeout: 4000 }).catch(() => null))),
-    async address() {
-      const n = await this.get(); if (!n) return null;
+    get(again) {
+      if (again && lastNone) ready = null;
+      return (ready ||= (inFrame ? viaBridge() : init({ timeout: 4000 }).catch(() => null)).then((n) => { lastNone = !n; return n; }));
+    },
+    async address(again) {
+      const n = await this.get(again); if (!n) return null;
       const list = await n.listAccounts();
       return Array.isArray(list) ? (typeof list[0] === 'string' ? list[0] : list[0]?.address) || null : null;
     },
@@ -240,7 +248,7 @@ async function walletConnect(auto) {
   const say = (t, err = false) => { $('loginErr').textContent = t; $('loginErr').classList.toggle('info', !err); };
   try {
     say(T('walletAsk'));
-    const a = await wallet.address();
+    const a = await wallet.address(!auto);
     if (!a) { say(T('walletNo'), true); return; }
     if (token) return;
     $('addr').value = a; say(T('walletIn'));
@@ -248,10 +256,13 @@ async function walletConnect(auto) {
   } catch (e) { say(e?.code === 'timeout' ? T('walletSlow') : T('walletNo') + (e?.message && e.message !== 'wallet' ? ` (${String(e.message).slice(0, 80)})` : ''), true); }
   finally { walletBusy = false; }
 }
-if (window.nimiq || window.nimiqPay || window.ReactNativeWebView) document.documentElement.classList.add('inpay');
+const payHint = !!(window.nimiq || window.nimiqPay || window.ReactNativeWebView);
+if (payHint) document.documentElement.classList.add('inpay');
+$('useNimiq').onclick = () => walletConnect(false);
+if (payHint) $('useNimiq').classList.remove('hidden');
 wallet.get().then((n) => {
   document.documentElement.classList.toggle('inpay', !!n);
-  if (!n) return; $('useNimiq').classList.remove('hidden'); $('useNimiq').onclick = () => walletConnect(false);
+  if (n) $('useNimiq').classList.remove('hidden');
 });
 
 let queue = [], busy = false, pendingAnswer = null;
